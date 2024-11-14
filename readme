@@ -3,8 +3,10 @@ Script usage
 The script accepts up to three command line arguments. If three are provided, they must are interpreted as the following:
 
 1- the name of the compiler to use
-2- the name (without extension) of the C source code file from which the executable is being produced
+2- the name (without .c extension) of the C source code file from which the executable is being produced
 3- the name to use for the generated makefile
+4- the name of the C file containing Criterion tests (without .c extension)
+5- the name of the C file which calls the source file (without .c extension)
 
 Arguments must be in that order.
 
@@ -15,4 +17,5 @@ The result would be a new file called Makefile created, which makes the main exc
 
 If only two arguments are provided, they are interpreted as (1) and (2), and the user is prompted to enter a value for (3).
 If only one argument is provided, it is interpreted as (1), and the user is prompted to enter values for (2) and (3).
-If no arguments are provided, the user is prompted to enter values for (1), (2), and (3).
+And so on for arguments (4) and (5).
+If no arguments are provided, the user is prompted to enter values for (1), (2),(3), (4) and (5).
