@@ -1,0 +1,140 @@
+#! /bin/bash
+
+if [ $# -le 0 ]; then
+    echo "Specify the compiler to use: "
+    read COMPILER
+else
+    COMPILER=$1
+fi
+if [ $# -le 1 ]; then
+    echo "Specify the executable c file, without including the .c: "
+    read SOURCE
+else
+    SOURCE=$2
+fi
+if [ $# -le 2 ]; then
+    echo "Specify the name of the makefile being created: "
+    read MAKEFILE
+else
+    MAKEFILE=$3
+fi
+if [ $# -le 3 ]; then
+    echo "Specify the name of the tests c file, without including the .c: "
+    read TEX
+else
+    TEX=$4
+fi
+if [ $# -le 4 ]; then
+    echo "Specify the name of the source c file, without including the .c: "
+    read RUN
+else
+    RUN=$5
+fi
+if [ $# -gt 5 ]; then
+    echo "Please call makeMake with 5 parameters, not more."
+fi
+
+touch $MAKEFILE
+echo -e "#Generated makefile with makeMake. Last updated $(date)\n" > "$MAKEFILE"
+
+#OS identification                                                         
+echo -e "OS := \$(shell uname -s)\n" >> "$MAKEFILE"
+echo -e "ifeq (\$(OS), Darwin)" >> "$MAKEFILE"
+echo -e "\tINCLUDE_PATH := /opt/homebrew/Cellar/criterion/2.4.1_1/include" >> "$MAKEFILE"
+echo -e "\tLIB_PATH := /opt/homebrew/Cellar/criterion/2.4.1_1/lib" >> "$MAKEFILE"
+echo -e "\tCC = $COMPILER-12" >> "$MAKEFILE"
+echo "endif" >> "$MAKEFILE"
+echo "ifeq (\$(OS), Linux)" >> "$MAKEFILE"
+echo -e "\tINCLUDE_PATH := /util/criterion/include" >> "$MAKEFILE"
+echo -e "\tLIB_PATH := /util/criterion/lib/x86_64-linux-gnu" >> "$MAKEFILE"
+echo -e "\tCC = $COMPILER" >> "$MAKEFILE"
+echo -e "endif\n" >> "$MAKEFILE"
+#End OS identification
+
+CFLAGS="-Wall -std=c11"
+FLAGS="-g -O0 -pg -fprofile-arcs -ftest-coverage"
+#Initialize variables
+echo -e "# Variables used by makefile\n" >> "$MAKEFILE"
+echo "CC=$COMPILER" >> "$MAKEFILE"
+echo -e "CFLAGS=$CFLAGS" >> "$MAKEFILE"
+echo -e "FLAGS=$FLAGS" >> "$MAKEFILE"
+echo -e "LFLAGS=-L \$(LIB_PATH) -I \$(INCLUDE_PATH)\n" >> "$MAKEFILE"
+echo "SRC = $RUN.c" >> "$MAKEFILE"
+echo "EXE=$SOURCE" >> "$MAKEFILE"
+echo "TEX=$TEX" >> "$MAKEFILE"
+echo "TST=$TEX.c" >> "$MAKEFILE"
+echo "GEX=$RUN-gprof" >> "$MAKEFILE"
+echo "VEX=$RUN-valgrind" >> "$MAKEFILE"
+OBJECTS=
+for sourceFile in $(ls *.c)
+do		  
+    if [ "$sourceFile" != "$SOURCE.c" ]; then
+	BASE=${sourceFile%.c}
+	OBJECTS="$BASE.o $OBJECTS"
+    fi
+done
+echo -e "OBJECTS=$OBJECTS\n" >> "$MAKEFILE"		  		  
+#End initialize variables
+
+echo -e "# Recipes for targets\n" >> "$MAKEFILE"
+#do the general rules here
+for file in $(ls *.c)
+do
+    if [ "$file" != "$TST" ]; then
+    if [ "$file" != "$SOURCE.c" ]; then
+	echo -e "`$COMPILER -MM $file`" >> "$MAKEFILE"
+	echo -e "\t\$(CC) \$(CFLAGS) -c $file\n" >> "$MAKEFILE"
+    fi
+    fi
+done
+#Do the excecuatble rule here
+echo -e "$EXE: \$(OBJECTS)" >> "$MAKEFILE"
+echo -e "\t\$(CC) -o \$(EXE) \$(OBJECTS) \$(EXE).c\n" >> "$MAKEFILE"
+
+#Do the test rule here
+echo -e "$TEX.o: \$(TST)" >> "$MAKEFILE"
+echo -e "\t\$(CC) -c -g -O0 -Wall -std=c11 -I \$(INCLUDE_PATH) \$(TST)" >> "$MAKEFILE"
+
+#Do the tool compilations
+echo "c-exec: $RUN.o" >> "$MAKEFILE"
+echo -e "\t$COMPILER \$(FLAGS) -Wall \$(LFLAGS) -o \$(GEX) \$(SRC) $EXE.c\n" >> "$MAKEFILE"
+
+echo "c-test: \$(OBJECTS)" >> "$MAKEFILE"
+echo -e "\t$COMPILER \$(FLAGS) -Wall \$(LFLAGS) -o \$(TEX) \$(SRC) \$(TST) -lcriterion\n" >> "$MAKEFILE"
+
+echo "v-exec: $RUN.o" >> "$MAKEFILE"
+echo -e "\t$COMPILER -g -O0 -Wall \$(LFLAGS) -o \$(VEX) \$(SRC) \$(EXE).c\n" >> "$MAKEFILE"
+
+echo -e "# PHONY targets\n" >> "$MAKEFILE"
+#PHONY targest, including tools 
+
+echo ".PHONY: clean" >> "$MAKEFILE"
+echo "clean:" >> "$MAKEFILE"
+echo -e "\trm -rf *~ \$(OBJECTS) \$(EXE) \$(GEX) \$(TEX) \$(VEX) *.dSYM *.gc?? analyze.txt gmon.out\n" >> "$MAKEFILE" 
+
+echo ".PHONY: andRunPerformance" >> "$MAKEFILE"
+echo "andRunPerformance:" >> "$MAKEFILE"
+echo -e "\tmake clean" >> "$MAKEFILE"
+echo -e "\tmake c-exec" >> "$MAKEFILE"
+echo -e "\t./\$(GEX)" >> "$MAKEFILE"
+echo -e "\tgprof -b ./\$(GEX) gmon.out > analyze.txt" >> "$MAKEFILE"
+echo -e "\tgcov -abcfu \$(basename \$(SRC))-gprof-\$(SRC)" >> "$MAKEFILE"
+echo -e "\t@echo \"**Look at analyze.txt for gprof timing data**\"" >> "$MAKEFILE"
+echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution counts.**\"" >> "$MAKEFILE"
+
+echo ".PHONY: andRunTests" >> "$MAKEFILE"
+echo "andRunTests:" >> "$MAKEFILE"
+echo -e "\tmake clean" >> "$MAKEFILE"
+echo -e "\tmake c-test" >> "$MAKEFILE"
+echo -e "\t./\$(TEX)" >> "$MAKEFILE"
+echo -e "\tgcov -abcfu \$(basename \$(SRC))-gprof-\$(SRC)" >> "$MAKEFILE"
+echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution**\"" >> "$MAKEFILE"
+
+echo ".PHONY: andRunCallGrind" >> "$MAKEFILE"
+echo "andRunCallGrind:" >> "$MAKEFILE"
+echo -e "\tmake clean" >> "$MAKEFILE"
+echo -e "\tmake v-exec" >> "$MAKEFILE"
+echo -e "\tvalgrind --tool=callgrind ./\$(VEX) 1000 1000" >> "$MAKEFILE"
+echo -e "\t@echo \"Use callgrind_annotate to interpret the data file.\"" >> "$MAKEFILE"
+
+echo "# End of makefile" >> "$MAKEFILE"
