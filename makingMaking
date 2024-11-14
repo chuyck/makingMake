@@ -25,11 +25,25 @@ fi
 touch $MAKEFILE
 echo -e "#Generated makefile with makeMake. Last updated $(date)\n" > "$MAKEFILE"
 
+#add OS identification
+echo -e "OS := \$(shell uname -s)\n" >> "$MAKEFILE"
+echo -e "ifeq (\$(OS), Darwin)" >> "$MAKEFILE"
+echo -e "\tINCLUDE_PATH := /opt/homebrew/Cellar/criterion/2.4.1_1/include" >> "$MAKEFILE"
+echo -e "\tLIB_PATH := /opt/homebrew/Cellar/criterion/2.4.1_1/lib" >> "$MAKEFILE"
+echo -e "\tCC = $COMPILER-12" >> "$MAKEFILE"
+echo "endif" >> "$MAKEFILE"
+echo "ifeq (\$(OS), Linux)" >> "$MAKEFILE"
+echo -e "\tINCLUDE_PATH := /util/criterion/include" >> "$MAKEFILE"
+echo -e "\tLIB_PATH := /util/criterion/lib/x86_64-linux-gnu" >> "$MAKEFILE"
+echo -e "\tCC = $COMPILER" >> "$MAKEFILE"
+echo -e "endif\n" >> "$MAKEFILE"
+
+
 CFLAGS="-Wall -std=c11"
 echo -e "# Variables used by makefile\n" >> "$MAKEFILE"
 echo "CC=$COMPILER" >> "$MAKEFILE"
 echo "CFLAGS=$CFLAGS" >> "$MAKEFILE"
-echo "EXE=$SOURCE" >> "$MAKEFILE"
+echo "SRC=$SOURCE" >> "$MAKEFILE"
 OBJECTS=
 for sourceFile in $(ls *.c)
 do		  
@@ -50,12 +64,12 @@ do
     fi
 done
 echo -e "$SOURCE: \$(OBJECTS)" >> "$MAKEFILE"
-echo -e "\t\$(CC) -o \$(EXE) \$(OBJECTS) \$(EXE).c\n" >> "$MAKEFILE"
+echo -e "\t\$(CC) -o \$(SRC) \$(OBJECTS) \$(SRC).c\n" >> "$MAKEFILE"
 
 echo -e "# PHONY targets\n" >> "$MAKEFILE"
 echo ".PHONY: clean" >> "$MAKEFILE"
 echo "clean:" >> "$MAKEFILE"
-echo -e "\trm -rf *~ \$(OBJECTS) \$(EXE)\n" >> "$MAKEFILE"
+echo -e "\trm -rf *~ \$(OBJECTS) \$(SRC)\n" >> "$MAKEFILE"
 echo "# End of makefile" >> "$MAKEFILE"
   
 
