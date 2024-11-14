@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ $# -le 0 ]; then
+    echo "Specify the compiler to use: "
+    read COMPILER
+else
+    COMPILER=$1
+fi
+if [ $# -le 1 ]; then
+    echo "Specify the executable c file, without including the .c: "
+    read SOURCE
+else
+    SOURCE=$2
+fi
+if [ $# -le 2 ]; then
+    echo "Specify the name of the makefile being created: "
+    read MAKEFILE
+else
+    MAKEFILE=$3
+fi
+if [ $# -gt 3 ]; then
+    echo "Please call makeMake with 3 parameters, not more."    
+fi
+
+touch $MAKEFILE
+echo -e "#Generated makefile with makeMake. Last updated $(date)\n" > "$MAKEFILE"
+
+CFLAGS="-Wall -std=c11"
+echo -e "# Variables used by makefile\n" >> "$MAKEFILE"
+echo "CC=$COMPILER" >> "$MAKEFILE"
+echo "CFLAGS=$CFLAGS" >> "$MAKEFILE"
+echo "EXE=$SOURCE" >> "$MAKEFILE"
+OBJECTS=
+for sourceFile in $(ls *.c)
+do		  
+    if [ "$sourceFile" != "$SOURCE.c" ]; then
+	BASE=${sourceFile%.c}
+	OBJECTS="$BASE.o $OBJECTS"
+    fi
+done
+echo -e "OBJECTS=$OBJECTS\n" >> "$MAKEFILE"		  		  
+
+echo -e "# Recipes for targets\n" >> "$MAKEFILE"
+#do the rules here
+for file in $(ls *.c)
+do
+    if [ "$file" != "$SOURCE.c" ]; then
+	echo -e "`$COMPILER -MM $file`" >> "$MAKEFILE"
+	echo -e "\t\$(CC) \$(CFLAGS) -c $file\n" >> "$MAKEFILE"
+    fi
+done
+echo -e "$SOURCE: \$(OBJECTS)" >> "$MAKEFILE"
+echo -e "\t\$(CC) -o \$(EXE) \$(OBJECTS) \$(EXE).c\n" >> "$MAKEFILE"
+
+echo -e "# PHONY targets\n" >> "$MAKEFILE"
+echo ".PHONY: clean" >> "$MAKEFILE"
+echo "clean:" >> "$MAKEFILE"
+echo -e "\trm -rf *~ \$(OBJECTS) \$(EXE)\n" >> "$MAKEFILE"
+echo "# End of makefile" >> "$MAKEFILE"
+  
+
