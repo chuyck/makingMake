@@ -59,7 +59,7 @@ echo "CC=$COMPILER" >> "$MAKEFILE"
 echo -e "CFLAGS=$CFLAGS" >> "$MAKEFILE"
 echo -e "FLAGS=$FLAGS" >> "$MAKEFILE"
 echo -e "LFLAGS=-L \$(LIB_PATH) -I \$(INCLUDE_PATH)\n" >> "$MAKEFILE"
-echo "SRC = $RUN.c" >> "$MAKEFILE"
+echo "SRC=$RUN.c" >> "$MAKEFILE"
 echo "EXE=$SOURCE" >> "$MAKEFILE"
 echo "TEX=$TEX" >> "$MAKEFILE"
 echo "TST=$TEX.c" >> "$MAKEFILE"
@@ -80,15 +80,13 @@ echo -e "# Recipes for targets\n" >> "$MAKEFILE"
 #do the general rules here
 for file in $(ls *.c)
 do
-    if [ "$file" != "$TST" ]; then
-    if [ "$file" != "$SOURCE.c" ]; then
+    if [ ["$file" != "$SOURCE.c" && "$file" != "$TST.c"] ]; then
 	echo -e "`$COMPILER -MM $file`" >> "$MAKEFILE"
 	echo -e "\t\$(CC) \$(CFLAGS) -c $file\n" >> "$MAKEFILE"
     fi
-    fi
 done
 #Do the excecuatble rule here
-echo -e "$EXE: \$(OBJECTS)" >> "$MAKEFILE"
+echo -e "$(EXE): \$(OBJECTS)" >> "$MAKEFILE"
 echo -e "\t\$(CC) -o \$(EXE) \$(OBJECTS) \$(EXE).c\n" >> "$MAKEFILE"
 
 #Do the test rule here
@@ -120,7 +118,7 @@ echo -e "\t./\$(GEX)" >> "$MAKEFILE"
 echo -e "\tgprof -b ./\$(GEX) gmon.out > analyze.txt" >> "$MAKEFILE"
 echo -e "\tgcov -abcfu \$(basename \$(SRC))-gprof-\$(SRC)" >> "$MAKEFILE"
 echo -e "\t@echo \"**Look at analyze.txt for gprof timing data**\"" >> "$MAKEFILE"
-echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution counts.**\"" >> "$MAKEFILE"
+echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution counts.**\"\n" >> "$MAKEFILE"
 
 echo ".PHONY: andRunTests" >> "$MAKEFILE"
 echo "andRunTests:" >> "$MAKEFILE"
@@ -128,13 +126,13 @@ echo -e "\tmake clean" >> "$MAKEFILE"
 echo -e "\tmake c-test" >> "$MAKEFILE"
 echo -e "\t./\$(TEX)" >> "$MAKEFILE"
 echo -e "\tgcov -abcfu \$(basename \$(SRC))-gprof-\$(SRC)" >> "$MAKEFILE"
-echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution**\"" >> "$MAKEFILE"
+echo -e "\t@echo \"**Look at $SRC.gcov for gcov annotated source code with execution**\"\n" >> "$MAKEFILE"
 
 echo ".PHONY: andRunCallGrind" >> "$MAKEFILE"
 echo "andRunCallGrind:" >> "$MAKEFILE"
 echo -e "\tmake clean" >> "$MAKEFILE"
 echo -e "\tmake v-exec" >> "$MAKEFILE"
 echo -e "\tvalgrind --tool=callgrind ./\$(VEX) 1000 1000" >> "$MAKEFILE"
-echo -e "\t@echo \"Use callgrind_annotate to interpret the data file.\"" >> "$MAKEFILE"
+echo -e "\t@echo \"Use callgrind_annotate to interpret the data file.\"\n" >> "$MAKEFILE"
 
 echo "# End of makefile" >> "$MAKEFILE"
