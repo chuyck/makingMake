@@ -86,7 +86,7 @@ do
     fi
 done
 #Do the excecuatble rule here
-echo -e "$(EXE): \$(OBJECTS)" >> "$MAKEFILE"
+echo -e "$SOURCE: \$(OBJECTS)" >> "$MAKEFILE"
 echo -e "\t\$(CC) -o \$(EXE) \$(OBJECTS) \$(EXE).c\n" >> "$MAKEFILE"
 
 #Do the test rule here
