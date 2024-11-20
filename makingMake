@@ -95,7 +95,7 @@ echo -e "\t\$(CC) -c -g -O0 -Wall -std=c11 -I \$(INCLUDE_PATH) \$(TST)" >> "$MAK
 
 #Do the tool compilations
 echo "c-exec: $RUN.o" >> "$MAKEFILE"
-echo -e "\t$COMPILER \$(FLAGS) -Wall \$(LFLAGS) -o \$(GEX) \$(SRC) $EXE.c\n" >> "$MAKEFILE"
+echo -e "\t$COMPILER \$(FLAGS) -Wall \$(LFLAGS) -o \$(GEX) \$(SRC) \$(EXE).c\n" >> "$MAKEFILE"
 
 echo "c-test: \$(OBJECTS)" >> "$MAKEFILE"
 echo -e "\t$COMPILER \$(FLAGS) -Wall \$(LFLAGS) -o \$(TEX) \$(SRC) \$(TST) -lcriterion\n" >> "$MAKEFILE"
